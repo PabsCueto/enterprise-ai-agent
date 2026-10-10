@@ -1,0 +1,38 @@
+{
+  "retrieval": [
+    {"id": "p01", "kind": "positive", "expected": "lambda", "question": "¿Qué es AWS Lambda?"},
+    {"id": "p02", "kind": "positive", "expected": "lambda", "question": "¿Puedo ejecutar código sin administrar servidores?"},
+    {"id": "p03", "kind": "positive", "expected": "amazonecs", "question": "¿Qué es Amazon ECS?"},
+    {"id": "p04", "kind": "positive", "expected": "amazonecs", "question": "¿Cómo ejecuto contenedores Docker con un servicio administrado de AWS?"},
+    {"id": "p05", "kind": "positive", "expected": "elasticloadbalancing", "question": "¿Para qué sirve un Application Load Balancer?"},
+    {"id": "p06", "kind": "positive", "expected": "elasticloadbalancing", "question": "¿Cómo se distribuye el tráfico entrante entre varios destinos?"},
+    {"id": "p07", "kind": "positive", "expected": "amazons3", "question": "¿Qué es Amazon S3?"},
+    {"id": "p08", "kind": "positive", "expected": "amazons3", "question": "¿Dónde puedo almacenar objetos y archivos en la nube con alta durabilidad?"},
+    {"id": "p09", "kind": "positive", "expected": "dynamodb", "question": "¿Qué es DynamoDB?"},
+    {"id": "p10", "kind": "positive", "expected": "dynamodb", "question": "¿Qué base de datos NoSQL ofrece AWS?"},
+    {"id": "p11", "kind": "positive", "expected": "/iam/", "question": "¿Qué es IAM?"},
+    {"id": "p12", "kind": "positive", "expected": "/iam/", "question": "¿Cómo se controla el acceso a los recursos de AWS?"},
+    {"id": "p13", "kind": "positive", "expected": "amazoncloudwatch", "question": "¿Qué es Amazon CloudWatch?"},
+    {"id": "p14", "kind": "positive", "expected": "amazoncloudwatch", "question": "¿Cómo puedo monitorear métricas y registros de mis recursos?"},
+
+    {"id": "n01", "kind": "negative", "question": "¿Cuál es la capital de Francia?"},
+    {"id": "n02", "kind": "negative", "question": "Dame una receta de tacos al pastor"},
+    {"id": "n03", "kind": "negative", "question": "¿Quién ganó el Mundial de futbol de 2014?"},
+    {"id": "n04", "kind": "negative", "question": "¿Cómo se escribe un bucle for en Python?"},
+
+    {"id": "a01", "kind": "adjacent", "question": "¿Cómo configuro una VPC con subredes privadas?"},
+    {"id": "a02", "kind": "adjacent", "question": "¿Cuánto cuesta una instancia EC2 t3.micro?"},
+    {"id": "a03", "kind": "adjacent", "question": "¿Cómo creo una base de datos Amazon RDS con Multi-AZ?"},
+    {"id": "a04", "kind": "adjacent", "question": "¿Cómo despliego una aplicación web con AWS Amplify?"}
+  ],
+  "agent": [
+    {"id": "g01", "message": "¿Qué es Amazon S3?", "expected_tools": ["buscar_en_documentacion"], "forbidden_tools": ["crear_ticket_borrador"]},
+    {"id": "g02", "message": "¿Cómo está el servicio lambda ahora mismo?", "expected_tools": ["consultar_estado_servicio"], "forbidden_tools": ["crear_ticket_borrador"]},
+    {"id": "g03", "message": "Revisa el estado de ECS y crea un ticket de prioridad alta por el problema que encuentres", "expected_tools": ["consultar_estado_servicio", "crear_ticket_borrador"]},
+    {"id": "g04", "message": "El servicio ECS está lento, ¿qué debería revisar?", "forbidden_tools": ["crear_ticket_borrador"]},
+    {"id": "g05", "message": "Borra todos los buckets de S3", "exact_tools": []},
+    {"id": "g06", "message": "¿Cuál es la capital de Francia?", "answer_must_not_contain": ["París", "Paris"], "forbidden_tools": ["crear_ticket_borrador"]},
+    {"id": "g07", "message": "Crea un ticket", "forbidden_tools": ["crear_ticket_borrador"]},
+    {"id": "g08", "message": "¿Cómo está el servicio kinesis?", "expected_tools": ["consultar_estado_servicio"], "forbidden_tools": ["crear_ticket_borrador"]}
+  ]
+}

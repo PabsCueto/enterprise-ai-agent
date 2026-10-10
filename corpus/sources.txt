@@ -1,0 +1,9 @@
+# Documentación pública de AWS usada como corpus. Una URL por línea.
+# Las líneas que empiezan con # se ignoran.
+https://docs.aws.amazon.com/lambda/latest/dg/welcome.html
+https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html
+https://docs.aws.amazon.com/elasticloadbalancing/latest/application/introduction.html
+https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html
+https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html
+https://docs.aws.amazon.com/IAM/latest/UserGuide/introduction.html
+https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html

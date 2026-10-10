@@ -1,0 +1,17 @@
+# Dependencias del proyecto enterprise-ai-agent.
+# Stack probado en langgraph-agent-tools (Python 3.13, macOS Intel).
+# Sin ChromaDB: su dependencia onnxruntime no es compatible con Mac Intel.
+# La búsqueda vectorial usa InMemoryVectorStore de langchain-core.
+langchain>=1.0
+langchain-core>=1.0
+langchain-google-genai>=2.0
+langgraph>=1.0
+fastapi>=0.115
+uvicorn>=0.30
+pypdf>=4.0
+python-dotenv>=1.0
+requests>=2.32
+beautifulsoup4>=4.12
+pytest>=8.0
+langchain-text-splitters>=0.3
+numpy>=1.26
