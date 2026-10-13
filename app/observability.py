@@ -15,7 +15,7 @@ from contextvars import ContextVar
 from datetime import datetime, timezone
 
 REQUEST_ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,64}")
-KNOWN_PATHS = {"/ask", "/agent", "/health", "/metrics"}  # el resto se agrupa como "other"
+KNOWN_PATHS = {"/", "/ask", "/agent", "/health", "/metrics"}  # el resto se agrupa como "other"
 
 request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
 request_fields_var: ContextVar["dict | None"] = ContextVar("request_fields", default=None)

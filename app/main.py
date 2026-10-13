@@ -59,7 +59,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Enterprise AI Agent", version="0.4.0", lifespan=lifespan)
+def docs_kwargs() -> dict:
+    """Con DOCS_ENABLED=false se apagan /docs, /redoc y /openapi.json (recomendado en despliegues públicos)."""
+    if os.getenv("DOCS_ENABLED", "true").lower() == "false":
+        return {"docs_url": None, "redoc_url": None, "openapi_url": None}
+    return {}
+
+
+app = FastAPI(title="Enterprise AI Agent", version="0.5.0", lifespan=lifespan, **docs_kwargs())
 
 
 @app.middleware("http")
@@ -172,6 +179,18 @@ async def admin_user(user: User = Depends(require_user)) -> User:
         annotate(auth="prohibida")
         raise HTTPException(status_code=403, detail="Se requiere un usuario administrador.")
     return user
+
+
+@app.get("/")
+def root() -> dict:
+    """Página de bienvenida mínima: quien abre la URL en el navegador entiende qué es y cómo usarlo."""
+    return {
+        "service": "enterprise-ai-agent",
+        "status": "ok",
+        "endpoints": ["GET /health", "POST /ask", "POST /agent"],
+        "auth": "se requiere la cabecera X-API-Key en /ask y /agent",
+        "repository": "https://github.com/PabsCueto/enterprise-ai-agent",
+    }
 
 
 @app.get("/health")
