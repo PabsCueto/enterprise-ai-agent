@@ -1,0 +1,9 @@
+{
+  "/lambda/": "compute",
+  "AmazonECS": "compute",
+  "elasticloadbalancing": "networking",
+  "AmazonS3": "storage",
+  "dynamodb": "storage",
+  "/IAM/": "security",
+  "AmazonCloudWatch": "operations"
+}

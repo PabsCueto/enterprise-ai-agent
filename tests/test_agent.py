@@ -9,6 +9,7 @@ from langchain_core.outputs import ChatGeneration, ChatResult
 import app.main as main
 import app.rag as rag
 from app.tools import make_tools
+from tests.helpers import ADMIN_KEY, patch_security
 from tests.test_api import fake_store
 
 
@@ -39,7 +40,8 @@ def make_client(monkeypatch, script):
     monkeypatch.setenv("MIN_SCORE", "-1")  # embeddings falsos: sin umbral
     monkeypatch.setattr(main, "get_store", fake_store)
     monkeypatch.setattr(rag, "_get_llm", lambda: ScriptedModel(script=script))
-    return TestClient(main.app)
+    patch_security(monkeypatch)
+    return TestClient(main.app, headers={"X-API-Key": ADMIN_KEY})
 
 
 def get_tool(tools, name):

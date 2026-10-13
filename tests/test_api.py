@@ -8,6 +8,7 @@ from langchain_core.vectorstores import InMemoryVectorStore
 
 import app.main as main
 import app.rag as rag
+from tests.helpers import ADMIN_KEY, patch_security
 
 
 def fake_store():
@@ -37,7 +38,8 @@ def make_client(monkeypatch, min_score="-1", llm=None):
     monkeypatch.setenv("MIN_SCORE", min_score)
     monkeypatch.setattr(main, "get_store", fake_store)
     monkeypatch.setattr(rag, "_get_llm", lambda: llm or FakeLLM())
-    return TestClient(main.app)
+    patch_security(monkeypatch)
+    return TestClient(main.app, headers={"X-API-Key": ADMIN_KEY})
 
 
 def test_health(monkeypatch):
