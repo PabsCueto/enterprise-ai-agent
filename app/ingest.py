@@ -34,10 +34,10 @@ def get_embeddings() -> GoogleGenerativeAIEmbeddings:
     )
 
 
-def load_documents() -> list[Document]:
+def load_documents(raw_dir=None) -> list[Document]:
     """Lee cada archivo de data/raw. La primera línea trae 'Fuente: <url>'."""
     docs = []
-    for path in sorted(RAW_DIR.glob("*.txt")):
+    for path in sorted(Path(raw_dir or RAW_DIR).glob("*.txt")):
         lines = path.read_text(encoding="utf-8").splitlines()
         source = lines[0].removeprefix("Fuente: ").strip()
         body = "\n".join(lines[2:])  # se omiten la fuente y la línea vacía
