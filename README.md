@@ -1,6 +1,7 @@
 # enterprise-ai-agent
 
 ![tests](https://github.com/PabsCueto/enterprise-ai-agent/actions/workflows/tests.yml/badge.svg)
+![docker](https://github.com/PabsCueto/enterprise-ai-agent/actions/workflows/docker.yml/badge.svg)
 
 A question-answering assistant over a document corpus that answers **only from the documents**, cites its sources, and can take actions through tools. It ships with per-user access control, request-level observability, and an evaluation harness that measures retrieval, refusal behaviour and the agent's tool choices.
 
@@ -122,15 +123,32 @@ python -m pytest -q                         # unit tests, no API key needed
 python evals/run_eval.py --agent --answers --injection  # evaluation (calls Gemini)
 ```
 
+## Container
+
+The `Dockerfile` builds a slim Python 3.13 image that runs as a non-root user. It deliberately contains **no documents, index, users or keys**: the index and users live in `data/` and are mounted, and the Gemini key is passed as an environment variable.
+
+```bash
+docker build -t enterprise-ai-agent .
+docker run --rm -p 8000:8000 \
+  -v "$PWD/data:/app/data" \
+  -e GEMINI_API_KEY=<your key> \
+  enterprise-ai-agent
+```
+
+On Linux the container user (uid 10001) must be able to read the mounted files, e.g. by adding `--user "$(id -u):$(id -g)"`. `PORT` selects the listening port (default 8000).
+
+CI (`.github/workflows/docker.yml`) builds the image on every push and smoke-tests it: it checks that the process is not root, that no `.env` or data is baked in, that the container starts against a minimal fake index (`scripts/make_smoke_index.py`), that `/health` answers, and that `/ask` rejects requests when no users are configured. The author's machine cannot run Docker, so CI is where the image is built and exercised.
+
 ## Project layout
 
 ```
 app/        ingest.py (index) · rag.py (retrieval + answer) · tools.py · agent.py
             security.py (keys, access groups, rate limit) · observability.py · main.py (API)
 evals/      dataset.json · security_cases.json · poisoned/ · metrics.py · run_eval.py · report.md
-scripts/    download_docs.py · build_index.py · create_api_key.py · test_search.py
+scripts/    download_docs.py · build_index.py · create_api_key.py · make_smoke_index.py · test_search.py
 tests/      API, agent, evaluation, observability and security tests (fake embeddings and models)
 corpus/     sources.txt (document URLs) · access.json (document → group)
+Dockerfile · .dockerignore · .github/workflows/ (tests.yml, docker.yml)
 ```
 
 ## Limitations
@@ -142,11 +160,12 @@ corpus/     sources.txt (document URLs) · access.json (document → group)
 - Rate limits, metrics and conversation state are in memory and single-process.
 - `/docs` (interactive API docs) is open.
 - Prompt injection has no complete defence. The 7 hand-written cases all resisted, which shows those payloads did not work against this model, not that none would. The structural limits (draft-only tickets, no destructive tools) matter more than the prompt.
-- Not deployed.
+- Not deployed. The container image is built and smoke-tested in CI, but the author has not run it locally.
+- Dependencies are version ranges, not a lock file, so an image built later may pick up newer library versions.
 
 ## Roadmap
 
 1. Larger and more varied injection set; human confirmation before write actions such as ticket creation.
 2. Larger corpus and evaluation set; repeated runs to measure consistency; a faithfulness check on answers.
-3. Container image built in CI and a short-lived cloud deployment for demos.
+3. A free public demo and a short-lived AWS deployment (the image is already built and smoke-tested in CI).
 4. Metrics and logs shipped to an external system.
