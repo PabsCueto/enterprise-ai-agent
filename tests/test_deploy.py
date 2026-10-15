@@ -23,3 +23,8 @@ def test_docs_can_be_disabled_with_an_environment_variable(monkeypatch):
     monkeypatch.setenv("DOCS_ENABLED", "true")
     assert main.docs_kwargs() == {}
     assert TestClient(FastAPI(**main.docs_kwargs())).get("/docs").status_code == 200
+
+
+def test_root_accepts_head_requests_used_by_platform_probes(monkeypatch):
+    with make_client(monkeypatch):
+        assert TestClient(main.app).head("/").status_code == 200

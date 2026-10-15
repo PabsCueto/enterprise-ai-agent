@@ -196,7 +196,7 @@ async def admin_user(user: User = Depends(require_user)) -> User:
     return user
 
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root() -> dict:
     """Página de bienvenida mínima: quien abre la URL en el navegador entiende qué es y cómo usarlo."""
     return {
