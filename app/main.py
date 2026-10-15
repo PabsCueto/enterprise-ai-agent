@@ -31,10 +31,12 @@ from app.rag import NO_ANSWER, answer_question
 from app.security import (
     RateLimiter,
     User,
+    UsersFileError,
     authenticate,
     load_access_map,
     load_users,
     make_doc_filter,
+    users_path,
 )
 
 MAX_AGENT_STEPS = 10  # límite de pasos del grafo, evita bucles infinitos
@@ -48,12 +50,25 @@ async def lifespan(app: FastAPI):
     # El índice se carga una sola vez al arrancar y se reutiliza en cada pregunta.
     app.state.store = get_store()
     app.state.agent = None  # el agente se construye en la primera petición a /agent
-    app.state.users = load_users()
+    startup_logger = logging.getLogger("app")
+    app.state.users = []
+    try:
+        app.state.users = load_users()
+    except UsersFileError as error:
+        # Falla cerrado: el servidor arranca (para poder ver el error) pero rechaza toda petición protegida.
+        startup_logger.error(str(error))
     app.state.access_map = load_access_map()
     app.state.limiter = RateLimiter(int(os.getenv("RATE_LIMIT_PER_MIN", "20")))
+    users_file = users_path()
+    startup_logger.info("usuarios cargados", extra={"fields": {
+        "users_file": str(users_file),
+        "exists": users_file.exists(),
+        "bytes": users_file.stat().st_size if users_file.exists() else 0,
+        "count": len(app.state.users),
+    }})
     if not app.state.users:
-        logging.getLogger("app").warning(
-            "No hay usuarios en data/users.json: se rechazarán todas las peticiones protegidas. "
+        startup_logger.warning(
+            "No hay usuarios cargados: se rechazarán todas las peticiones protegidas. "
             "Crea uno con scripts/create_api_key.py"
         )
     yield

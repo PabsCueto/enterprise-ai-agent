@@ -39,15 +39,28 @@ def users_path() -> Path:
     return Path(os.getenv("USERS_FILE", ROOT / "data" / "users.json"))
 
 
+class UsersFileError(ValueError):
+    """El archivo de usuarios existe pero no tiene el formato esperado."""
+
+
 def load_users(path=None) -> list:
     path = Path(path) if path else users_path()
     if not path.exists():
         return []
-    data = json.loads(path.read_text(encoding="utf-8"))
-    return [
-        User(u["name"], u["key_sha256"], tuple(u.get("groups", [])), bool(u.get("admin", False)))
-        for u in data.get("users", [])
-    ]
+    text = path.read_text(encoding="utf-8")
+    try:
+        data = json.loads(text)
+        return [
+            User(u["name"], u["key_sha256"], tuple(u.get("groups", [])), bool(u.get("admin", False)))
+            for u in data.get("users", [])
+        ]
+    except (json.JSONDecodeError, KeyError, TypeError, AttributeError) as error:
+        # Se informa de qué se leyó (tamaño y primer carácter), nunca del contenido.
+        raise UsersFileError(
+            f"El archivo de usuarios {path} no es válido ({type(error).__name__}). "
+            f"Tamaño: {len(text.encode('utf-8'))} bytes; primer carácter: {text[:1]!r}. "
+            "Debe ser el JSON completo que genera scripts/create_api_key.py y empezar con '{'."
+        ) from error
 
 
 def add_user(name: str, groups: list, admin: bool = False, path=None) -> str:

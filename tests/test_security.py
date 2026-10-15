@@ -1,5 +1,6 @@
 """Pruebas de seguridad: API keys, acceso por grupo, aislamiento de hilos y límite de uso."""
 import json
+import logging
 from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
@@ -10,6 +11,7 @@ import app.rag as rag
 from app.security import (
     RateLimiter,
     User,
+    UsersFileError,
     add_user,
     authenticate,
     group_for_source,
@@ -181,3 +183,56 @@ def test_rate_limiter_window_expires():
     assert limiter.check("u") is not None
     now[0] = 61
     assert limiter.check("u") is None
+
+
+# --- Archivo de usuarios inválido --------------------------------------------------------
+
+def test_invalid_users_file_gives_a_clear_error_without_leaking_content(tmp_path):
+    cases = {"vacio.json": "", "texto.json": "eaa_clave-secreta-pegada-por-error", "incompleto.json": '{"users": [{"name": "x"}]}'}
+    for name, content in cases.items():
+        path = tmp_path / name
+        path.write_text(content, encoding="utf-8")
+        try:
+            load_users(path)
+            raise AssertionError("debía fallar")
+        except UsersFileError as error:
+            message = str(error)
+        assert name in message and "bytes" in message
+        assert "clave-secreta" not in message          # nunca se imprime el contenido
+    assert "0 bytes" in _error_for(tmp_path / "vacio.json") and "'e'" in _error_for(tmp_path / "texto.json")
+
+
+def _error_for(path):
+    try:
+        load_users(path)
+    except UsersFileError as error:
+        return str(error)
+    return ""
+
+
+def test_server_starts_without_users_when_the_file_is_invalid(monkeypatch, tmp_path, caplog):
+    bad_file = tmp_path / "users.json"
+    bad_file.write_text("", encoding="utf-8")
+    monkeypatch.setenv("USERS_FILE", str(bad_file))
+    monkeypatch.setattr(main, "get_store", fake_store)
+    monkeypatch.setattr(main, "load_access_map", lambda: ACCESS_MAP)
+    caplog.set_level(logging.INFO, logger="app")
+    with TestClient(main.app) as client:
+        assert client.get("/health").status_code == 200       # el servicio queda visible
+        assert client.post("/ask", json={"question": "¿Qué es Lambda?"}, headers=HEADERS_ADMIN).status_code == 401
+    assert any("no es válido" in r.getMessage() and "0 bytes" in r.getMessage() for r in caplog.records)
+    loaded = [r for r in caplog.records if r.getMessage() == "usuarios cargados"][0]
+    assert loaded.fields["exists"] is True and loaded.fields["bytes"] == 0 and loaded.fields["count"] == 0
+
+
+def test_startup_logs_how_many_users_were_loaded(monkeypatch, tmp_path, caplog):
+    users_file = tmp_path / "users.json"
+    add_user("demo", ["compute"], path=users_file)
+    monkeypatch.setenv("USERS_FILE", str(users_file))
+    monkeypatch.setattr(main, "get_store", fake_store)
+    monkeypatch.setattr(main, "load_access_map", lambda: ACCESS_MAP)
+    caplog.set_level(logging.INFO, logger="app")
+    with TestClient(main.app):
+        pass
+    loaded = [r for r in caplog.records if r.getMessage() == "usuarios cargados"][0]
+    assert loaded.fields["count"] == 1 and loaded.fields["bytes"] > 0
